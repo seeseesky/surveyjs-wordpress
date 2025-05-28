@@ -68,7 +68,8 @@ class SurveyJS_MySurveys {
                                     <thead>
                                         <tr>
                                             <td>Name</td>
-                                            <td></td>
+                                            <td>Page URL</td>
+                                            <td>Actions</td>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -76,9 +77,21 @@ class SurveyJS_MySurveys {
                                         foreach ($client->getSurveys() as $surveyDefinition) {
                                             $editUrl = add_query_arg(array('page' => 'surveyjs_editor', 'id' => $surveyDefinition->id, 'name' => $surveyDefinition->name), admin_url('admin.php'));
                                             $resultsUrl = add_query_arg(array('page' => 'surveyjs_results', 'id' => $surveyDefinition->id, 'name' => $surveyDefinition->name), admin_url('admin.php'));
+                                            
+                                            // Get the page URL for this survey
+                                            $page_slug = 'survey-' . $surveyDefinition->id;
+                                            $page = get_page_by_path($page_slug);
+                                            $page_url = $page ? get_permalink($page->ID) : '#';
                                         ?>
                                         <tr>
                                             <td><?php echo sanitize_text_field($surveyDefinition->name) ?></td>
+                                            <td>
+                                                <?php if ($page): ?>
+                                                    <a href="<?php echo esc_url($page_url) ?>" target="_blank"><?php echo esc_url($page_url) ?></a>
+                                                <?php else: ?>
+                                                    <em>Page not found</em>
+                                                <?php endif; ?>
+                                            </td>
                                             <td>
                                                 <!-- <a class="sv_button_link" href="<?php echo sanitize_key($surveyDefinition->id) ?>">Run</a> -->
                                                 <a class="sv_button_link" href="<?php echo esc_url($editUrl) ?>">Edit</a>
