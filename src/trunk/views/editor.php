@@ -5,9 +5,47 @@ class SurveyJS_Editor {
 
     function __construct() {
     }
+    
+    /**
+     * Renders an access denied message
+     */
+    public static function render_access_denied() {
+        ?>
+            <div class="wp-sjs-plugin">
+                <div class="survey-page-header">
+                    <div class="sv_main survey-page-header-content">
+                        <button style="min-width: 80px;color: white;background-color: #1ab394;border: none;padding: 6px;border-radius: 5px;margin-top: 10px;" onclick="window.location = '/wp-admin/admin.php?page=sjs-main-menu'">&lt&nbspBack</button>
+                    </div>
+                </div>
+                <div class="sv_main sv_frame sv_default_css">
+                    <div class="sv_custom_header"></div>
+                    <div class="sv_container">
+                        <div class="sv_header">
+                            <h3>Access Denied</h3>
+                        </div>
+                        <div class="sv_body">
+                            <div class="alert alert-danger" role="alert">
+                                <p>You do not have permission to edit this survey.</p>
+                                <p>You can only edit surveys that you have created.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <?php
+    }
 
     public static function render() {
         $surveyId = sanitize_key($_GET['id']);
+        
+        // Check if the current user has access to this survey
+        $client = new SurveyJS_Client();
+        if (!$client->userHasAccessToSurvey($surveyId)) {
+            // User doesn't have access, show an error message
+            self::render_access_denied();
+            return;
+        }
+        
         global $wpdb;
         $table_name = $wpdb->prefix . 'sjs_my_surveys';
         $query = "SELECT * FROM " . $table_name . " WHERE id=" . $surveyId;

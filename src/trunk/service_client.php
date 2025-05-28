@@ -40,6 +40,39 @@ class SurveyJS_Client {
         ));
         return !empty($column);
     }
+    
+    /**
+     * Checks if the current user has access to a specific survey
+     * 
+     * @param int $survey_id The ID of the survey to check
+     * @return bool True if the user has access, false otherwise
+     */
+    public function userHasAccessToSurvey($survey_id) {
+        // Admins and editors can access all surveys
+        if (current_user_can('edit_others_posts')) {
+            return true;
+        }
+        
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'sjs_my_surveys';
+        $current_user_id = get_current_user_id();
+        
+        // Check if the user_id column exists
+        if ($this->columnExists($table_name, 'user_id')) {
+            // Query to check if this survey belongs to the current user
+            $query = $wpdb->prepare(
+                "SELECT COUNT(*) FROM {$table_name} WHERE id = %d AND (user_id = %d OR user_id IS NULL)", 
+                $survey_id, 
+                $current_user_id
+            );
+            
+            $count = $wpdb->get_var($query);
+            return $count > 0;
+        } else {
+            // If the user_id column doesn't exist, only admins and editors can access
+            return false;
+        }
+    }
 
 }
 
