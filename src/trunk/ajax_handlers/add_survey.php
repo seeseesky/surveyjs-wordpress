@@ -41,8 +41,8 @@ class SurveyJS_AddSurvey extends SurveyJS_AJAX_Handler {
      * @return int|WP_Error The ID of the created page or WP_Error on failure
      */
     private function create_survey_page($survey_id, $survey_name) {
-        // Create a sanitized version of the survey name for the page slug
-        $page_slug = sanitize_title($survey_name);
+        // Create the page slug in the format 'survey-{id}'
+        $page_slug = 'survey-' . $survey_id;
         
         // Create the page content with the shortcode
         $page_content = sprintf('[Survey id=%d name="%s"]', $survey_id, esc_attr($survey_name));

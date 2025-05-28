@@ -15,12 +15,15 @@ class SurveyJS_MySurveys {
         ?>
             <script>
                 function addNewSurvey() {
+                    var surveyName = prompt("Enter a name for your new survey:", "New Survey");
+                    if (!surveyName) return; // User cancelled the prompt
+                    
                     jQuery.ajax({
                         url:  "<?php echo esc_url($addSurveyUri) ?>",
                         type: "POST",
-                        data: { Name: "New Survey" },
+                        data: { Name: surveyName },
                         success: function (data) {
-                            window.location = "<?php echo esc_url($editSurveyUri) ?>&id=" + data.Id + "&name=New Survey";
+                            window.location = "<?php echo esc_url($editSurveyUri) ?>&id=" + data.Id + "&name=" + encodeURIComponent(surveyName);
                         }
                     });
                 }
