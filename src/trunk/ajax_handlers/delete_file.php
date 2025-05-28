@@ -15,7 +15,7 @@ class SurveyJS_DeleteFile extends SurveyJS_AJAX_Handler {
         if($_SERVER['REQUEST_METHOD'] === 'GET') {
             $filename = sanitize_file_name($_GET["name"]);
 
-            if (str_contains($filename, "/uploads/surveyjs") && current_user_can( 'administrator' ) ) {
+            if (str_contains($filename, "/uploads/surveyjs") && current_user_can( 'edit_posts' ) ) {
                 $uploadpath = substr($filename, strpos($filename, "/surveyjs"));
                 $upload_dir=wp_upload_dir();
                 $fullname = $upload_dir['basedir'] . $uploadpath;

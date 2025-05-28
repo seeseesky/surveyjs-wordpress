@@ -136,15 +136,15 @@ class SurveyJS_SurveyJS {
     }
   
     function wps_add_menu() {
-        add_menu_page( 'My surveys', 'SurveyJS', 'manage_options', 'sjs-main-menu', array(
+        add_menu_page( 'My surveys', 'SurveyJS', 'edit_posts', 'sjs-main-menu', array(
                         "SurveyJS_MySurveys", 'render'
                         ), plugins_url('images/logo_20х20.png', __FILE__));
-        // add_submenu_page( 'sjs-main-menu', __( 'My Surveys', 'sjs-main-menu' ), __( 'My Surveys', 'sjs-main-menu' ), 'manage_options', 'sjs-my-surveys', array(
+        // add_submenu_page( 'sjs-main-menu', __( 'My Surveys', 'sjs-main-menu' ), __( 'My Surveys', 'sjs-main-menu' ), 'edit_posts', 'sjs-my-surveys', array(
         //                 __CLASS__, 'wps_mysurveys_page'
         //                 ));
         add_submenu_page( 'sjs-main-menu', __( 'Settings', 'sjs-main-menu' ), __( 'Settings', 'sjs-main-menu' ), 'manage_options', 'sjs-settings', array( 'SurveyJS_SettingsPage', 'sjs_render_settings' ) );
-        add_submenu_page('', '', '', 'manage_options', 'surveyjs_editor', array('SurveyJS_Editor', 'render'));
-        add_submenu_page('', '', '', 'manage_options', 'surveyjs_results', array('SurveyJS_Results', 'render'));
+        add_submenu_page('', '', '', 'edit_posts', 'surveyjs_editor', array('SurveyJS_Editor', 'render'));
+        add_submenu_page('', '', '', 'edit_posts', 'surveyjs_results', array('SurveyJS_Results', 'render'));
     }
   
     // function wps_mysurveys_page() {
