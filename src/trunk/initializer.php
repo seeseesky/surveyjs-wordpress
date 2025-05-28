@@ -143,14 +143,9 @@ class SurveyJS_SurveyJS {
         //                 __CLASS__, 'wps_mysurveys_page'
         //                 ));
         
-        // Get the current user and check if they have the Author role
-        $current_user = wp_get_current_user();
-        $is_author_only = in_array('author', $current_user->roles) && count($current_user->roles) === 1;
-        
-        // Only hide the Settings page for users who are ONLY Authors
-        if (!$is_author_only) {
-            add_submenu_page( 'sjs-main-menu', __( 'Settings', 'sjs-main-menu' ), __( 'Settings', 'sjs-main-menu' ), 'manage_options', 'sjs-settings', array( 'SurveyJS_SettingsPage', 'sjs_render_settings' ) );
-        }
+        // Add the Settings page with the manage_options capability check
+        // WordPress will automatically hide it from users who don't have this capability
+        add_submenu_page( 'sjs-main-menu', __( 'Settings', 'sjs-main-menu' ), __( 'Settings', 'sjs-main-menu' ), 'manage_options', 'sjs-settings', array( 'SurveyJS_SettingsPage', 'sjs_render_settings' ) );
         
         add_submenu_page('', '', '', 'edit_posts', 'surveyjs_editor', array('SurveyJS_Editor', 'render'));
         add_submenu_page('', '', '', 'edit_posts', 'surveyjs_results', array('SurveyJS_Results', 'render'));

@@ -10,10 +10,17 @@ class SurveyJS_Client {
         global $wpdb;
         $table_name = $wpdb->prefix . 'sjs_my_surveys';
         $current_user_id = get_current_user_id();
+        $current_user = wp_get_current_user();
         
-        // If user_id column exists, filter by current user
+        // If user_id column exists, filter by current user for Authors, show all for Editors and Admins
         if ($this->columnExists($table_name, 'user_id')) {
-            $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE user_id = %d OR user_id IS NULL", $current_user_id);
+            // Check if user is an Editor or Admin (they can see all surveys)
+            if (current_user_can('edit_others_posts')) { // Editors and Admins have this capability
+                $query = "SELECT * FROM " . $table_name;
+            } else {
+                // Authors can only see their own surveys
+                $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE user_id = %d OR user_id IS NULL", $current_user_id);
+            }
         } else {
             // Fallback to showing all surveys if column doesn't exist yet
             $query = "SELECT * FROM " . $table_name;
