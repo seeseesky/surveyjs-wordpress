@@ -13,10 +13,12 @@ class SurveyJS_AddSurvey extends SurveyJS_AJAX_Handler {
             global $wpdb;
             $table_name = $wpdb->prefix . 'sjs_my_surveys';
 
+            $current_user_id = get_current_user_id();
             $wpdb->insert( 
                 $table_name, 
                 array( 
-                 'name' => sanitize_text_field($_POST['Name'])
+                 'name' => sanitize_text_field($_POST['Name']),
+                 'user_id' => $current_user_id
                 ) 
             );
 
