@@ -142,7 +142,16 @@ class SurveyJS_SurveyJS {
         // add_submenu_page( 'sjs-main-menu', __( 'My Surveys', 'sjs-main-menu' ), __( 'My Surveys', 'sjs-main-menu' ), 'edit_posts', 'sjs-my-surveys', array(
         //                 __CLASS__, 'wps_mysurveys_page'
         //                 ));
-        add_submenu_page( 'sjs-main-menu', __( 'Settings', 'sjs-main-menu' ), __( 'Settings', 'sjs-main-menu' ), 'manage_options', 'sjs-settings', array( 'SurveyJS_SettingsPage', 'sjs_render_settings' ) );
+        
+        // Get the current user and check if they have the Author role
+        $current_user = wp_get_current_user();
+        $is_author_only = in_array('author', $current_user->roles) && count($current_user->roles) === 1;
+        
+        // Only hide the Settings page for users who are ONLY Authors
+        if (!$is_author_only) {
+            add_submenu_page( 'sjs-main-menu', __( 'Settings', 'sjs-main-menu' ), __( 'Settings', 'sjs-main-menu' ), 'manage_options', 'sjs-settings', array( 'SurveyJS_SettingsPage', 'sjs_render_settings' ) );
+        }
+        
         add_submenu_page('', '', '', 'edit_posts', 'surveyjs_editor', array('SurveyJS_Editor', 'render'));
         add_submenu_page('', '', '', 'edit_posts', 'surveyjs_results', array('SurveyJS_Results', 'render'));
     }
