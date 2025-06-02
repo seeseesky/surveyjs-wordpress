@@ -81,10 +81,45 @@ class SurveyJS_MySurveys {
                 
                 function addCoOwner() {
                     var surveyId = jQuery('#co-owners-survey-id').val();
-                    var email = jQuery('#co-owner-email').val();
+                    var emailInput = jQuery('#co-owner-email').val();
                     
+                    if (!emailInput) {
+                        alert('Please enter at least one valid email address');
+                        return;
+                    }
+                    
+                    // Split by comma and trim whitespace
+                    var emails = emailInput.split(',').map(function(email) {
+                        return email.trim();
+                    }).filter(function(email) {
+                        return email !== '';
+                    });
+                    
+                    if (emails.length === 0) {
+                        alert('Please enter at least one valid email address');
+                        return;
+                    }
+                    
+                    // Show loading indicator
+                    jQuery('#co-owners-loading').show();
+                    
+                    // Process each email sequentially
+                    processEmails(surveyId, emails, 0);
+                }
+                
+                function processEmails(surveyId, emails, index) {
+                    // If we've processed all emails, hide loading and finish
+                    if (index >= emails.length) {
+                        jQuery('#co-owner-email').val('');
+                        jQuery('#co-owners-loading').hide();
+                        return;
+                    }
+                    
+                    var email = emails[index];
+                    
+                    // Skip empty emails
                     if (!email) {
-                        alert('Please enter a valid email address');
+                        processEmails(surveyId, emails, index + 1);
                         return;
                     }
                     
@@ -97,17 +132,19 @@ class SurveyJS_MySurveys {
                         },
                         success: function(response) {
                             if (response.success) {
-                                // Clear the email input
-                                jQuery('#co-owner-email').val('');
-                                
                                 // Update the co-owners list
                                 updateCoOwnersList(response.data.co_owners);
+                                
+                                // Process next email
+                                processEmails(surveyId, emails, index + 1);
                             } else {
-                                alert(response.data || 'Failed to add co-owner');
+                                alert(response.data || 'Failed to add co-owner: ' + email);
+                                jQuery('#co-owners-loading').hide();
                             }
                         },
                         error: function() {
-                            alert('An error occurred while adding the co-owner');
+                            alert('An error occurred while adding the co-owner: ' + email);
+                            jQuery('#co-owners-loading').hide();
                         }
                     });
                 }
@@ -235,6 +272,30 @@ class SurveyJS_MySurveys {
                     border: none;
                     border-radius: 3px;
                     cursor: pointer;
+                }
+                
+                .co-owners-loading {
+                    margin-top: 10px;
+                    color: #666;
+                    display: flex;
+                    align-items: center;
+                }
+                
+                .co-owners-loading .spinner {
+                    display: inline-block;
+                    width: 20px;
+                    height: 20px;
+                    margin-right: 10px;
+                    background: url(<?php echo admin_url('images/spinner.gif'); ?>) no-repeat;
+                    background-size: 20px 20px;
+                    vertical-align: middle;
+                }
+                
+                .co-owners-help {
+                    margin-top: 5px;
+                    font-size: 12px;
+                    color: #666;
+                    font-style: italic;
                 }
                 
                 .co-owners-list {
@@ -380,9 +441,13 @@ class SurveyJS_MySurveys {
                         <p>Add email addresses of users who should have access to this survey. Co-owners can view, edit, and see results of this survey.</p>
                         <div class="co-owners-form">
                             <input type="hidden" id="co-owners-survey-id" value="">
-                            <input type="email" id="co-owner-email" placeholder="Enter email address" required>
+                            <input type="email" id="co-owner-email" placeholder="Enter email addresses (comma separated)" required multiple>
                             <button type="button" onclick="addCoOwner()">Add</button>
+                            <div id="co-owners-loading" class="co-owners-loading" style="display: none;">
+                                <span class="spinner"></span> Adding co-owners...
+                            </div>
                         </div>
+                        <p class="co-owners-help">You can enter multiple email addresses separated by commas (e.g., user1@example.com, user2@example.com)</p>
                         <div id="co-owners-list" class="co-owners-list">
                             <!-- Co-owners will be listed here -->
                         </div>
