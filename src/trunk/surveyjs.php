@@ -28,6 +28,7 @@ Author URI: http://devsoftbaltic.com/
             json LONGTEXT,
             theme LONGTEXT,
             user_id bigint(20) DEFAULT NULL,
+            co_owners LONGTEXT DEFAULT NULL,
             UNIQUE KEY id (id)
         ) $charset_collate;";
 
@@ -92,6 +93,9 @@ Author URI: http://devsoftbaltic.com/
 
     include("ajax_handlers/delete_file.php");
     new SurveyJS_DeleteFile();
+    
+    include("ajax_handlers/manage_co_owners.php");
+    new SurveyJS_ManageCoOwners();
 
     include("initializer.php");
     new SurveyJS_SurveyJS();
