@@ -81,45 +81,45 @@ class SurveyJS_MySurveys {
                 
                 function addCoOwner() {
                     var surveyId = jQuery('#co-owners-survey-id').val();
-                    var emailInput = jQuery('#co-owner-email').val();
+                    var usernameInput = jQuery('#co-owner-username').val();
                     
-                    if (!emailInput) {
-                        alert('Please enter at least one valid email address');
+                    if (!usernameInput) {
+                        alert('Please enter at least one valid username');
                         return;
                     }
                     
                     // Split by comma and trim whitespace
-                    var emails = emailInput.split(',').map(function(email) {
-                        return email.trim();
-                    }).filter(function(email) {
-                        return email !== '';
+                    var usernames = usernameInput.split(',').map(function(username) {
+                        return username.trim();
+                    }).filter(function(username) {
+                        return username !== '';
                     });
                     
-                    if (emails.length === 0) {
-                        alert('Please enter at least one valid email address');
+                    if (usernames.length === 0) {
+                        alert('Please enter at least one valid username');
                         return;
                     }
                     
                     // Show loading indicator
                     jQuery('#co-owners-loading').show();
                     
-                    // Process each email sequentially
-                    processEmails(surveyId, emails, 0);
+                    // Process each username sequentially
+                    processEmails(surveyId, usernames, 0);
                 }
                 
-                function processEmails(surveyId, emails, index) {
-                    // If we've processed all emails, hide loading and finish
-                    if (index >= emails.length) {
-                        jQuery('#co-owner-email').val('');
+                function processEmails(surveyId, usernames, index) {
+                    // If we've processed all usernames, hide loading and finish
+                    if (index >= usernames.length) {
+                        jQuery('#co-owner-username').val('');
                         jQuery('#co-owners-loading').hide();
                         return;
                     }
                     
-                    var email = emails[index];
+                    var username = usernames[index];
                     
-                    // Skip empty emails
-                    if (!email) {
-                        processEmails(surveyId, emails, index + 1);
+                    // Skip empty usernames
+                    if (!username) {
+                        processEmails(surveyId, usernames, index + 1);
                         return;
                     }
                     
@@ -128,37 +128,37 @@ class SurveyJS_MySurveys {
                         type: "POST",
                         data: { 
                             SurveyId: surveyId,
-                            Email: email 
+                            Username: username 
                         },
                         success: function(response) {
                             if (response.success) {
                                 // Update the co-owners list
                                 updateCoOwnersList(response.data.co_owners);
                                 
-                                // Process next email
-                                processEmails(surveyId, emails, index + 1);
+                                // Process next username
+                                processEmails(surveyId, usernames, index + 1);
                             } else {
-                                alert(response.data || 'Failed to add co-owner: ' + email);
+                                alert(response.data || 'Failed to add co-owner: ' + username);
                                 jQuery('#co-owners-loading').hide();
                             }
                         },
                         error: function() {
-                            alert('An error occurred while adding the co-owner: ' + email);
+                            alert('An error occurred while adding the co-owner: ' + username);
                             jQuery('#co-owners-loading').hide();
                         }
                     });
                 }
                 
-                function removeCoOwner(email) {
+                function removeCoOwner(username) {
                     var surveyId = jQuery('#co-owners-survey-id').val();
                     
-                    if (confirm('Are you sure you want to remove ' + email + ' as a co-owner?')) {
+                    if (confirm('Are you sure you want to remove ' + username + ' as a co-owner?')) {
                         jQuery.ajax({
                             url: "<?php echo add_query_arg(array('action' => 'SurveyJS_RemoveCoOwner'), admin_url('admin-ajax.php')) ?>",
                             type: "POST",
                             data: { 
                                 SurveyId: surveyId,
-                                Email: email 
+                                Username: username 
                             },
                             success: function(response) {
                                 if (response.success) {
@@ -179,16 +179,18 @@ class SurveyJS_MySurveys {
                     var list = jQuery('#co-owners-list');
                     list.empty();
                     
-                    if (coOwners && coOwners.length > 0) {
-                        coOwners.forEach(function(email) {
-                            var item = jQuery('<div class="co-owner-item"></div>');
-                            item.append('<span class="co-owner-email">' + email + '</span>');
-                            item.append('<button type="button" class="co-owner-remove" onclick="removeCoOwner(\'' + email + '\');">Remove</button>');
-                            list.append(item);
-                        });
-                    } else {
-                        list.append('<div class="no-co-owners">No co-owners added yet</div>');
+                    if (!coOwners || coOwners.length === 0) {
+                        list.html('<p>No co-owners yet</p>');
+                        return;
                     }
+                    
+                    var html = '<ul>';
+                    for (var i = 0; i < coOwners.length; i++) {
+                        html += '<li>' + coOwners[i] + ' <button type="button" onclick="removeCoOwner(\'' + coOwners[i] + '\')" class="remove-co-owner">Remove</button></li>';
+                    }
+                    html += '</ul>';
+                    
+                    list.html(html);
                 }
             </script>
             
@@ -438,16 +440,16 @@ class SurveyJS_MySurveys {
                         <span class="co-owners-close" onclick="closeCoOwnersModal()">&times;</span>
                     </div>
                     <div class="co-owners-modal-body">
-                        <p>Add email addresses of users who should have access to this survey. Co-owners can view, edit, and see results of this survey.</p>
+                        <p>Add WordPress usernames of users who should have access to this survey. Co-owners can view, edit, and see results of this survey.</p>
                         <div class="co-owners-form">
                             <input type="hidden" id="co-owners-survey-id" value="">
-                            <input type="email" id="co-owner-email" placeholder="Enter email addresses (comma separated)" required multiple>
+                            <input type="text" id="co-owner-username" placeholder="Enter usernames (comma separated)" required>
                             <button type="button" onclick="addCoOwner()">Add</button>
                             <div id="co-owners-loading" class="co-owners-loading" style="display: none;">
                                 <span class="spinner"></span> Adding co-owners...
                             </div>
                         </div>
-                        <p class="co-owners-help">You can enter multiple email addresses separated by commas (e.g., user1@example.com, user2@example.com)</p>
+                        <p class="co-owners-help">You can enter multiple usernames separated by commas (e.g., john, mary, admin)</p>
                         <div id="co-owners-list" class="co-owners-list">
                             <!-- Co-owners will be listed here -->
                         </div>

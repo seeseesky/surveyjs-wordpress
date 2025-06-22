@@ -16,7 +16,7 @@ class SurveyJS_Client {
         $table_name = $wpdb->prefix . 'sjs_my_surveys';
         $current_user_id = get_current_user_id();
         $current_user = wp_get_current_user();
-        $current_user_email = $current_user->user_email;
+        $current_username = $current_user->user_login;
         
         $result = array(
             'owned' => array(),
@@ -45,7 +45,7 @@ class SurveyJS_Client {
                     // Filter surveys where current user is a co-owner
                     foreach ($potential_shared_surveys as $survey) {
                         $co_owners = json_decode($survey->co_owners, true);
-                        if (is_array($co_owners) && in_array($current_user_email, $co_owners)) {
+                        if (is_array($co_owners) && in_array($current_username, $co_owners)) {
                             // Make sure this survey is not already in the owned list
                             $found = false;
                             foreach ($result['owned'] as $owned_survey) {
@@ -75,7 +75,7 @@ class SurveyJS_Client {
         $table_name = $wpdb->prefix . 'sjs_my_surveys';
         $current_user_id = get_current_user_id();
         $current_user = wp_get_current_user();
-        $current_user_email = $current_user->user_email;
+        $current_username = $current_user->user_login;
         
         // If user_id column exists, filter by current user for Authors, show all for Editors and Admins
         if ($this->columnExists($table_name, 'user_id')) {
@@ -105,7 +105,7 @@ class SurveyJS_Client {
                     // Filter surveys where current user is a co-owner
                     foreach ($potential_shared_surveys as $survey) {
                         $co_owners = json_decode($survey->co_owners, true);
-                        if (is_array($co_owners) && in_array($current_user_email, $co_owners)) {
+                        if (is_array($co_owners) && in_array($current_username, $co_owners)) {
                             // Check if this survey is already in the list (avoid duplicates)
                             $found = false;
                             foreach ($surveys as $existing_survey) {
@@ -160,7 +160,7 @@ class SurveyJS_Client {
         $table_name = $wpdb->prefix . 'sjs_my_surveys';
         $current_user_id = get_current_user_id();
         $current_user = wp_get_current_user();
-        $current_user_email = $current_user->user_email;
+        $current_username = $current_user->user_login;
         
         // Check if the user_id column exists
         if ($this->columnExists($table_name, 'user_id')) {
@@ -184,7 +184,7 @@ class SurveyJS_Client {
             // Check if user is a co-owner
             if ($this->columnExists($table_name, 'co_owners') && !empty($survey->co_owners)) {
                 $co_owners = json_decode($survey->co_owners, true);
-                if (is_array($co_owners) && in_array($current_user_email, $co_owners)) {
+                if (is_array($co_owners) && in_array($current_username, $co_owners)) {
                     return true;
                 }
             }
@@ -200,18 +200,19 @@ class SurveyJS_Client {
      * Add a co-owner to a survey
      * 
      * @param int $survey_id The ID of the survey
-     * @param string $email The email of the co-owner to add
-     * @return bool True if successful, false otherwise
+     * @param string $username The username of the co-owner to add
+     * @return bool|string True if successful, error message if failed
      */
-    public function addCoOwner($survey_id, $email) {
-        // Validate email
-        if (!is_email($email)) {
-            return false;
+    public function addCoOwner($survey_id, $username) {
+        // Validate username (check if user exists)
+        $user = get_user_by('login', $username);
+        if (!$user) {
+            return 'User not found: ' . $username;
         }
         
         // Check if current user has access to the survey
         if (!$this->userHasAccessToSurvey($survey_id)) {
-            return false;
+            return 'Access denied';
         }
         
         global $wpdb;
@@ -231,8 +232,8 @@ class SurveyJS_Client {
             $co_owners = array();
         }
         
-        if (!in_array($email, $co_owners)) {
-            $co_owners[] = $email;
+        if (!in_array($username, $co_owners)) {
+            $co_owners[] = $username;
             
             // Update the co-owners in the database
             $result = $wpdb->update(
@@ -253,10 +254,10 @@ class SurveyJS_Client {
      * Remove a co-owner from a survey
      * 
      * @param int $survey_id The ID of the survey
-     * @param string $email The email of the co-owner to remove
+     * @param string $username The username of the co-owner to remove
      * @return bool True if successful, false otherwise
      */
-    public function removeCoOwner($survey_id, $email) {
+    public function removeCoOwner($survey_id, $username) {
         // Check if current user has access to the survey
         if (!$this->userHasAccessToSurvey($survey_id)) {
             return false;
@@ -275,8 +276,8 @@ class SurveyJS_Client {
         $co_owners = !empty($co_owners_json) ? json_decode($co_owners_json, true) : array();
         
         // Remove co-owner if in the list
-        if (is_array($co_owners) && in_array($email, $co_owners)) {
-            $co_owners = array_diff($co_owners, array($email));
+        if (is_array($co_owners) && in_array($username, $co_owners)) {
+            $co_owners = array_diff($co_owners, array($username));
             
             // Update the co-owners in the database
             $result = $wpdb->update(

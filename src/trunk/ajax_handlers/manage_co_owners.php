@@ -1,25 +1,29 @@
 <?php
-if ( ! defined( 'ABSPATH' ) ) exit;
+if (!defined('ABSPATH')) exit;
 
 class SurveyJS_ManageCoOwners {
 
     function __construct() {
-        add_action('wp_ajax_SurveyJS_AddCoOwner', array($this, 'add_co_owner'));
-        add_action('wp_ajax_SurveyJS_RemoveCoOwner', array($this, 'remove_co_owner'));
-        add_action('wp_ajax_SurveyJS_GetCoOwners', array($this, 'get_co_owners'));
+        add_action('wp_ajax_SurveyJS_AddCoOwner', array($this, 'addCoOwner'));
+        add_action('wp_ajax_SurveyJS_RemoveCoOwner', array($this, 'removeCoOwner'));
+        add_action('wp_ajax_SurveyJS_GetCoOwners', array($this, 'getCoOwners'));
     }
 
-    function add_co_owner() {
-        // Check if user has permission to edit posts
+    /**
+     * AJAX handler for adding a co-owner
+     */
+    public function addCoOwner() {
+        // Check if user has permission
         if (!current_user_can('edit_posts')) {
-            wp_send_json_error('Access denied');
+            wp_send_json_error('Permission denied');
             return;
         }
 
-        $survey_id = isset($_POST['SurveyId']) ? intval($_POST['SurveyId']) : 0;
-        $email = isset($_POST['Email']) ? sanitize_email($_POST['Email']) : '';
+        // Get and sanitize parameters
+        $survey_id = isset($_POST['SurveyId']) ? sanitize_key($_POST['SurveyId']) : 0;
+        $username = isset($_POST['Username']) ? sanitize_user($_POST['Username']) : '';
 
-        if (empty($survey_id) || empty($email)) {
+        if (empty($survey_id) || empty($username)) {
             wp_send_json_error('Missing required parameters');
             return;
         }
@@ -32,29 +36,32 @@ class SurveyJS_ManageCoOwners {
             return;
         }
 
-        $result = $client->addCoOwner($survey_id, $email);
+        $result = $client->addCoOwner($survey_id, $username);
         
-        if ($result) {
-            wp_send_json_success(array(
-                'message' => 'Co-owner added successfully',
-                'co_owners' => $client->getCoOwners($survey_id)
-            ));
+        if ($result === true) {
+            $co_owners = $client->getCoOwners($survey_id);
+            wp_send_json_success(array('co_owners' => $co_owners));
         } else {
-            wp_send_json_error('Failed to add co-owner');
+            // If result is a string, it's an error message
+            wp_send_json_error(is_string($result) ? $result : 'Failed to add co-owner');
         }
     }
 
-    function remove_co_owner() {
-        // Check if user has permission to edit posts
+    /**
+     * AJAX handler for removing a co-owner
+     */
+    public function removeCoOwner() {
+        // Check if user has permission
         if (!current_user_can('edit_posts')) {
-            wp_send_json_error('Access denied');
+            wp_send_json_error('Permission denied');
             return;
         }
 
-        $survey_id = isset($_POST['SurveyId']) ? intval($_POST['SurveyId']) : 0;
-        $email = isset($_POST['Email']) ? sanitize_email($_POST['Email']) : '';
+        // Get and sanitize parameters
+        $survey_id = isset($_POST['SurveyId']) ? sanitize_key($_POST['SurveyId']) : 0;
+        $username = isset($_POST['Username']) ? sanitize_user($_POST['Username']) : '';
 
-        if (empty($survey_id) || empty($email)) {
+        if (empty($survey_id) || empty($username)) {
             wp_send_json_error('Missing required parameters');
             return;
         }
@@ -67,27 +74,29 @@ class SurveyJS_ManageCoOwners {
             return;
         }
 
-        $result = $client->removeCoOwner($survey_id, $email);
+        $result = $client->removeCoOwner($survey_id, $username);
         
-        if ($result) {
-            wp_send_json_success(array(
-                'message' => 'Co-owner removed successfully',
-                'co_owners' => $client->getCoOwners($survey_id)
-            ));
+        if ($result === true) {
+            $co_owners = $client->getCoOwners($survey_id);
+            wp_send_json_success(array('co_owners' => $co_owners));
         } else {
             wp_send_json_error('Failed to remove co-owner');
         }
     }
 
-    function get_co_owners() {
-        // Check if user has permission to edit posts
+    /**
+     * AJAX handler for getting co-owners
+     */
+    public function getCoOwners() {
+        // Check if user has permission
         if (!current_user_can('edit_posts')) {
-            wp_send_json_error('Access denied');
+            wp_send_json_error('Permission denied');
             return;
         }
 
-        $survey_id = isset($_GET['SurveyId']) ? intval($_GET['SurveyId']) : 0;
-
+        // Get and sanitize parameters
+        $survey_id = isset($_GET['SurveyId']) ? sanitize_key($_GET['SurveyId']) : 0;
+        
         if (empty($survey_id)) {
             wp_send_json_error('Missing required parameters');
             return;
@@ -103,9 +112,7 @@ class SurveyJS_ManageCoOwners {
 
         $co_owners = $client->getCoOwners($survey_id);
         
-        wp_send_json_success(array(
-            'co_owners' => $co_owners
-        ));
+        wp_send_json_success(array('co_owners' => $co_owners));
     }
 }
 ?>
