@@ -2,6 +2,24 @@
 
 include_once("ajax_handler.php");
 
+/**
+ * Generates a UUID v4
+ * 
+ * @return string UUID v4 string
+ */
+function generate_uuid_v4() {
+    // Generate 16 bytes (128 bits) of random data
+    $data = random_bytes(16);
+    
+    // Set version to 0100
+    $data[6] = chr(ord($data[6]) & 0x0f | 0x40);
+    // Set bits 6-7 to 10
+    $data[8] = chr(ord($data[8]) & 0x3f | 0x80);
+
+    // Output the 36 character UUID
+    return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
+}
+
 class SurveyJS_AddSurvey extends SurveyJS_AJAX_Handler {
     
     function __construct() {
@@ -15,12 +33,14 @@ class SurveyJS_AddSurvey extends SurveyJS_AJAX_Handler {
 
             $current_user_id = get_current_user_id();
             $survey_name = sanitize_text_field($_POST['Name']);
+            $uuid = generate_uuid_v4();
             
             $wpdb->insert( 
                 $table_name, 
                 array( 
                  'name' => $survey_name,
-                 'user_id' => $current_user_id
+                 'user_id' => $current_user_id,
+                 'uuid' => $uuid
                 ) 
             );
             
@@ -29,7 +49,7 @@ class SurveyJS_AddSurvey extends SurveyJS_AJAX_Handler {
             // Create a new page with the survey shortcode
             $this->create_survey_page($survey_id, $survey_name);
 
-            wp_send_json( array('Id' => $survey_id) );
+            wp_send_json( array('Id' => $survey_id, 'Uuid' => $uuid) );
         }
     }
     

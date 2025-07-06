@@ -24,6 +24,7 @@ Author URI: http://devsoftbaltic.com/
 
         $sql = "CREATE TABLE $table_name (
             id mediumint(9) NOT NULL AUTO_INCREMENT,
+            uuid varchar(36) DEFAULT NULL,
             name text NOT NULL,
             json LONGTEXT,
             theme LONGTEXT,
@@ -31,6 +32,10 @@ Author URI: http://devsoftbaltic.com/
             co_owners LONGTEXT DEFAULT NULL,
             UNIQUE KEY id (id)
         ) $charset_collate;";
+        
+        // Add index on uuid for faster lookups
+        $sql_index = "CREATE INDEX idx_uuid ON $table_name (uuid);";
+        dbDelta( $sql_index );
 
         dbDelta( $sql );
     }
