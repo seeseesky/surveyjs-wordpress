@@ -38,7 +38,6 @@ class SurveyJS_GetSurveyJson extends SurveyJS_AJAX_Handler {
             $theme = $survey->theme;
 
             wp_send_json( array(
-                'id' => $survey->id,
                 'uuid' => $survey->uuid,
                 'json' => $json, 
                 'theme' => $theme
