@@ -92,7 +92,7 @@ class SurveyJS_CloneSurvey extends SurveyJS_AJAX_Handler {
         $page_slug = $uuid ? 'survey-' . $uuid : 'survey-' . $survey_id;
         
         // Create the page content with the shortcode
-        $page_content = sprintf('[Survey id=%d name="%s"]', $survey_id, esc_attr($survey_name));
+        $page_content = sprintf('[Survey uuid="%s" name="%s"]', $uuid, esc_attr($survey_name));
         
         // Set up the page data
         $page_data = array(

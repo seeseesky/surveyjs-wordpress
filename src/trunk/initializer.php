@@ -163,10 +163,63 @@ class SurveyJS_SurveyJS {
         <?php
     }
 
+    /**
+     * Generates a version 4 UUID
+     * 
+     * @return string UUID v4
+     */
+    function generate_uuid_v4() {
+        // Generate 16 random bytes
+        $data = random_bytes(16);
+        
+        // Set version to 0100
+        $data[6] = chr(ord($data[6]) & 0x0f | 0x40);
+        // Set bits 6-7 to 10
+        $data[8] = chr(ord($data[8]) & 0x3f | 0x80);
+        
+        // Format the UUID
+        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
+    }
+    
     function wps_process_shortcode($attrs) {
         ob_start();
         
-        $id = esc_attr($attrs["id"]);
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'sjs_my_surveys';
+        $uuid = null;
+        $id = null;
+        
+        // Check if we have a UUID or ID in the shortcode
+        if (isset($attrs["uuid"])) {
+            $uuid = esc_attr($attrs["uuid"]);
+            // Get the ID from the database using the UUID for backward compatibility
+            $id = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$table_name} WHERE uuid = %s", $uuid));
+        } elseif (isset($attrs["id"])) {
+            // For backward compatibility with existing shortcodes
+            $id = esc_attr($attrs["id"]);
+            // Get the UUID from the database using the survey ID
+            $uuid = $wpdb->get_var($wpdb->prepare("SELECT uuid FROM {$table_name} WHERE id = %d", $id));
+            
+            // If UUID is not found (old surveys without UUID), generate one and update the database
+            if (!$uuid) {
+                $uuid = $this->generate_uuid_v4();
+                $wpdb->update(
+                    $table_name,
+                    array('uuid' => $uuid),
+                    array('id' => $id),
+                    array('%s'),
+                    array('%d')
+                );
+            }
+        } else {
+            return "Error: Survey shortcode must include either 'uuid' or 'id' attribute.";
+        }
+        
+        // If we couldn't find the survey, show an error
+        if (!$id || !$uuid) {
+            return "Error: Survey not found.";
+        }
+        
         $getSurveyJsonUri = add_query_arg(array('action' => 'SurveyJS_GetSurveyJson'), admin_url('admin-ajax.php'));
         $saveResultUri = add_query_arg(array('action' => 'SurveyJS_SaveResult'), admin_url('admin-ajax.php'));
         $uploadFileUri = add_query_arg(array('action' => 'SurveyJS_UploadFiles'), admin_url('admin-ajax.php'));
@@ -180,7 +233,7 @@ class SurveyJS_SurveyJS {
             jQuery.ajax({
                 url:  "<?php echo esc_url($getSurveyJsonUri)  ?>",
                 type: "POST",
-                data: { Id: <?php echo $id ?> },
+                data: { Uuid: "<?php echo esc_js($uuid) ?>" },
                 success: function (data) {
                     var json = {}
                     let theme;
@@ -211,7 +264,7 @@ class SurveyJS_SurveyJS {
                         jQuery.ajax({
                             url:  "<?php echo esc_url($saveResultUri) ?>",
                             type: "POST",
-                            data: { SurveyId: '<?php echo $id ?>', Json : JSON.stringify(sender.data) },
+                            data: { SurveyUuid: '<?php echo esc_js($uuid) ?>', Json : JSON.stringify(sender.data) },
                             success: function (data) {options.showSaveSuccess();},
                             error: function (xhr) {options.showSaveError(xhr.responseText);}
                         });

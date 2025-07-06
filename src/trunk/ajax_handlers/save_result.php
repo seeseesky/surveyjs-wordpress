@@ -14,10 +14,8 @@ class SurveyJS_SaveResult extends SurveyJS_AJAX_Handler {
             $TableName = 'sjs_results';
             $SurveyId = null;
             
-            // Get survey ID either directly or by UUID
-            if (isset($_POST['SurveyId'])) {
-                $SurveyId = intval(sanitize_key($_POST['SurveyId']));
-            } elseif (isset($_POST['SurveyUuid'])) {
+            // Only allow saving results using UUID for security
+            if (isset($_POST['SurveyUuid'])) {
                 $SurveyUuid = sanitize_text_field($_POST['SurveyUuid']);
                 global $wpdb;
                 $surveys_table = $wpdb->prefix . 'sjs_my_surveys';
@@ -31,7 +29,12 @@ class SurveyJS_SaveResult extends SurveyJS_AJAX_Handler {
                     return;
                 }
             } else {
-                wp_send_json_error(array('error' => 'Missing survey identifier'));
+                // For backward compatibility, if SurveyId is provided, convert it to error
+                if (isset($_POST['SurveyId'])) {
+                    wp_send_json_error(array('error' => 'Access by ID is no longer supported. Please use UUID instead.'));
+                } else {
+                    wp_send_json_error(array('error' => 'Missing UUID identifier'));
+                }
                 return;
             }
             
