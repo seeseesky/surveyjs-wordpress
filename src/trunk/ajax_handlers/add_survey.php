@@ -47,7 +47,7 @@ class SurveyJS_AddSurvey extends SurveyJS_AJAX_Handler {
             $survey_id = $wpdb->insert_id;
             
             // Create a new page with the survey shortcode
-            $this->create_survey_page($survey_id, $survey_name);
+            $this->create_survey_page($survey_id, $survey_name, $uuid);
 
             wp_send_json( array('Id' => $survey_id, 'Uuid' => $uuid) );
         }
@@ -58,11 +58,12 @@ class SurveyJS_AddSurvey extends SurveyJS_AJAX_Handler {
      * 
      * @param int $survey_id The ID of the survey
      * @param string $survey_name The name of the survey
+     * @param string $uuid The UUID of the survey (optional)
      * @return int|WP_Error The ID of the created page or WP_Error on failure
      */
-    private function create_survey_page($survey_id, $survey_name) {
-        // Create the page slug in the format 'survey-{id}'
-        $page_slug = 'survey-' . $survey_id;
+    private function create_survey_page($survey_id, $survey_name, $uuid = null) {
+        // Create the page slug in the format 'survey-{uuid}' if UUID is provided, otherwise use 'survey-{id}'
+        $page_slug = $uuid ? 'survey-' . $uuid : 'survey-' . $survey_id;
         
         // Create the page content with the shortcode
         $page_content = sprintf('[Survey id=%d name="%s"]', $survey_id, esc_attr($survey_name));

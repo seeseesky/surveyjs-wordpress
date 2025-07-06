@@ -350,12 +350,72 @@ class SurveyJS_MySurveys {
                                 $owned_surveys = $surveys['owned'];
                                 $shared_surveys = $surveys['shared'];
                                 
+                                /**
+                                 * Creates a new WordPress page with the survey shortcode embedded
+                                 * 
+                                 * @param int $survey_id The ID of the survey
+                                 * @param string $survey_name The name of the survey
+                                 * @param string $uuid The UUID of the survey (optional)
+                                 * @return int|WP_Error The ID of the created page or WP_Error on failure
+                                 */
+                                function create_survey_page($survey_id, $survey_name, $uuid = null) {
+                                    // Create the page slug in the format 'survey-{uuid}' if UUID is provided, otherwise use 'survey-{id}'
+                                    $page_slug = $uuid ? 'survey-' . $uuid : 'survey-' . $survey_id;
+                                    
+                                    // Check if page already exists
+                                    $existing_page = get_page_by_path($page_slug);
+                                    if ($existing_page) {
+                                        return $existing_page->ID;
+                                    }
+                                    
+                                    // Create the page content with the shortcode
+                                    $page_content = sprintf('[Survey id=%d name="%s"]', $survey_id, esc_attr($survey_name));
+                                    
+                                    // Set up the page data
+                                    $page_data = array(
+                                        'post_title'    => $survey_name,
+                                        'post_content'  => $page_content,
+                                        'post_status'   => 'publish',
+                                        'post_type'     => 'page',
+                                        'post_name'     => $page_slug,
+                                        'comment_status' => 'closed'
+                                    );
+                                    
+                                    // Insert the page into the database
+                                    $page_id = wp_insert_post($page_data);
+                                    
+                                    return $page_id;
+                                }
+                                
                                 // Function to render a survey row
                                 function render_survey_row($surveyDefinition, $editUrl, $resultsUrl) {
-                                    // Get the page URL for this survey
-                                    $page_slug = 'survey-' . $surveyDefinition->id;
-                                    $page = get_page_by_path($page_slug);
-                                    $page_url = $page ? get_permalink($page->ID) : '#';
+                                    global $wpdb;
+                                    $page = null;
+                                    $page_url = '#';
+                                    
+                                    // First check if the survey has a UUID
+                                    if (isset($surveyDefinition->uuid) && !empty($surveyDefinition->uuid)) {
+                                        // Try to find the page with the UUID-based slug
+                                        $page_slug = 'survey-' . $surveyDefinition->uuid;
+                                        $page = get_page_by_path($page_slug);
+                                    }
+                                    
+                                    // If no page found with UUID or no UUID exists, try with ID (for backward compatibility)
+                                    if (!$page) {
+                                        $page_slug = 'survey-' . $surveyDefinition->id;
+                                        $page = get_page_by_path($page_slug);
+                                    }
+                                    
+                                    // Set the page URL if a page was found
+                                    if ($page) {
+                                        $page_url = get_permalink($page->ID);
+                                    } else {
+                                        // If no page exists, create one
+                                        $page_id = create_survey_page($surveyDefinition->id, $surveyDefinition->name, $surveyDefinition->uuid);
+                                        if ($page_id) {
+                                            $page_url = get_permalink($page_id);
+                                        }
+                                    }
                                     ?>
                                     <tr>
                                         <td><?php echo sanitize_text_field($surveyDefinition->name) ?></td>

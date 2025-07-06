@@ -28,11 +28,11 @@ class SurveyJS_Client {
             // Check if user is an Editor or Admin (they can see all surveys)
             if (current_user_can('edit_others_posts')) { // Editors and Admins have this capability
                 // For admins and editors, all surveys are considered 'owned'
-                $result['owned'] = $wpdb->get_results("SELECT * FROM " . $table_name);
+                $result['owned'] = $wpdb->get_results("SELECT id, uuid, name, json, theme, user_id, co_owners FROM " . $table_name);
             } else {
                 // Get surveys where user is the owner
                 $result['owned'] = $wpdb->get_results(
-                    $wpdb->prepare("SELECT * FROM {$table_name} WHERE user_id = %d OR user_id IS NULL", $current_user_id)
+                    $wpdb->prepare("SELECT id, uuid, name, json, theme, user_id, co_owners FROM {$table_name} WHERE user_id = %d OR user_id IS NULL", $current_user_id)
                 );
                 
                 // Get surveys where user is a co-owner
@@ -64,7 +64,7 @@ class SurveyJS_Client {
             }
         } else {
             // Fallback to showing all surveys if column doesn't exist yet
-            $result['owned'] = $wpdb->get_results("SELECT * FROM " . $table_name);
+            $result['owned'] = $wpdb->get_results("SELECT id, uuid, name, json, theme, user_id, co_owners FROM " . $table_name);
         }
         
         return $result;
@@ -81,14 +81,14 @@ class SurveyJS_Client {
         if ($this->columnExists($table_name, 'user_id')) {
             // Check if user is an Editor or Admin (they can see all surveys)
             if (current_user_can('edit_others_posts')) { // Editors and Admins have this capability
-                $query = "SELECT * FROM " . $table_name;
+                $query = "SELECT id, uuid, name, json, theme, user_id, co_owners FROM " . $table_name;
             } else {
                 // Authors can see their own surveys and surveys where they are co-owners
                 $surveys = array();
                 
                 // First get surveys where user is the owner
                 $owned_surveys = $wpdb->get_results(
-                    $wpdb->prepare("SELECT * FROM {$table_name} WHERE user_id = %d OR user_id IS NULL", $current_user_id)
+                    $wpdb->prepare("SELECT id, uuid, name, json, theme, user_id, co_owners FROM {$table_name} WHERE user_id = %d OR user_id IS NULL", $current_user_id)
                 );
                 
                 if (!empty($owned_surveys)) {
@@ -126,7 +126,7 @@ class SurveyJS_Client {
             }
         } else {
             // Fallback to showing all surveys if column doesn't exist yet
-            $query = "SELECT * FROM " . $table_name;
+            $query = "SELECT id, uuid, name, json, theme, user_id, co_owners FROM " . $table_name;
         }
         
         return $wpdb->get_results( $query );
@@ -166,7 +166,7 @@ class SurveyJS_Client {
         if ($this->columnExists($table_name, 'user_id')) {
             // First check if user is the owner
             $query = $wpdb->prepare(
-                "SELECT * FROM {$table_name} WHERE id = %d", 
+                "SELECT id, uuid, name, json, theme, user_id, co_owners FROM {$table_name} WHERE id = %d", 
                 $survey_id
             );
             
